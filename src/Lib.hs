@@ -89,12 +89,13 @@ atom = Atom . (read :: String -> Integer) <$>
 -- *a               *a
 
 eval :: Noun -> Noun
+eval (a :-: (b :-: c) :-: d) = eval (a :-: b :-: c) :-: eval (a :-: d)
 eval (a :-: Atom 0 :-: Atom b) = treeLookup b a
 eval (a :-: Atom 1 :-: b) = b
 eval (a :-: Atom 2 :-: b :-: c) = eval $ eval (a :-: b) :-: eval (a :-: c)
 eval (a :-: Atom 3 :-: b) = case eval (a :-: b) of
-                                    Atom _ -> Atom 0
-                                    (:-:) _ _ -> Atom 1
+                                    Atom _ -> Atom 1
+                                    (:-:) _ _ -> Atom 0
 eval (a :-: Atom 4 :-: b) = case eval (a :-: b) of
                                     Atom v -> Atom (v + 1)
                                     _      -> undefined
@@ -113,6 +114,3 @@ treeLookup 2 (a :-: b) = a
 treeLookup 3 (a :-: b) = b
 treeLookup a b = if even a then treeLookup 2 (treeLookup (div a 2) b)
                            else treeLookup 3 (treeLookup (div (a - 1) 2) b)
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
