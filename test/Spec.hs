@@ -66,3 +66,10 @@ main = hspec $ do
         it "*[5 [6 [1 0] [1 3] [1 4]]] -> 3" $ evalTest "[5 [6 [1 0] [1 3] [1 4]]]" "[3]"
 
         it "*[5 [6 [1 0] [4 0 1] [4 0 1]]] -> 6" $ evalTest "[5 [6 [1 0] [4 0 1] [4 0 1]]]" "[6]"
+    describe "7 macro" $
+
+        it "composes add" $ evalTest "[42 [7 [4 0 1] [4 0 1]]]" "[44]"
+
+    describe "8 macro" $
+
+        it "composes add w/ 8" $ evalTest "[42 [8 [4 0 1] [0 1]]]" "[43 42]"
