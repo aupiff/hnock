@@ -104,9 +104,16 @@ eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
      a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
        :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
        :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
+eval (a :-: Atom 7 :-: b :-: c) = eval $ a :-: Atom 2 :-: b :-: Atom 1 :-: c
+eval (a :-: Atom 8 :-: b :-: c) = eval $
+    a :-: Atom 7 :-: ((Atom 7 :-: (Atom 0 :-: Atom 1) :-: b) :-: Atom 0 :-: Atom 1) :-: c
+eval (a :-: Atom 9 :-: b :-: c) = eval $
+    a :-: Atom 7 :-: c :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 0 :-: b
+eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
+    a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
+eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
+-- TODO figure out an error-handling strategy
 eval x = x
-
--- eval (Cell a (Cell (Atom 7) (Cell b c))) = Cell a (Cell (Atom 2) (Cell b (Cell (Atom 1) c)))
 
 treeLookup :: Integer -> Noun -> Noun
 treeLookup 1 n = n
