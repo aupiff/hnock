@@ -35,6 +35,8 @@ test-suite hnock-test
   main-is:             Spec.hs
   build-depends:       base
                      , hnock
+                     , hspec
+                     , QuickCheck
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

@@ -24,16 +24,15 @@ import           Text.ParserCombinators.Parsec ( Parser
 import Debug.Trace (traceShowId)
 
 
-data Noun = Cell Noun Noun
-          | Atom Integer
-          deriving (Show, Eq)
+data Noun = !Noun :-: !Noun | Atom !Integer deriving (Show, Eq)
+
+infixr 7 :-:
 
 -- PARSING
+--
 
-test = eval <$> parse noun "" "[4 1 3]"
-
-testf x = eval <$> parse noun "" x
--- "" "  [ [1 0] 3 [4 0 1] 4 5 6 8     [1 0]   ]"
+parseEvalNoun = fmap eval . parseNoun
+parseNoun = parse noun ""
 
 program :: Parser Noun
 program = noun <* eof
@@ -45,7 +44,7 @@ noun = stripSpaces (try atom <|> cell)
 
 
 cell :: Parser Noun
-cell = foldr1 Cell <$> (char '[' *> many1 noun <* char ']')
+cell = foldr1 (:-:) <$> (char '[' *> many1 noun <* char ']')
 
 
 atom :: Parser Noun
@@ -90,21 +89,28 @@ atom = Atom . (read :: String -> Integer) <$>
 -- *a               *a
 
 eval :: Noun -> Noun
-eval (Cell a (Cell (Atom 0) (Atom b))) = treeLookup b a
-eval (Cell a (Cell (Atom 1) b)) = b -- 1, K combinator
-eval (Cell a (Cell (Atom 2) (Cell b c))) = eval (Cell (eval (Cell a b)) (eval (Cell a c)))
-eval (Cell a (Cell (Atom 3) b)) = case eval (Cell a b) of
+eval (a :-: Atom 0 :-: Atom b) = treeLookup b a
+eval (a :-: Atom 1 :-: b) = b
+eval (a :-: Atom 2 :-: b :-: c) = eval $ eval (a :-: b) :-: eval (a :-: c)
+eval (a :-: Atom 3 :-: b) = case eval (a :-: b) of
                                     Atom _ -> Atom 0
-                                    Cell _ _ -> Atom 1
-eval (Cell a (Cell (Atom 4) b)) = case eval (Cell a b) of
+                                    (:-:) _ _ -> Atom 1
+eval (a :-: Atom 4 :-: b) = case eval (a :-: b) of
                                     Atom v -> Atom (v + 1)
                                     _      -> undefined
-eval (Cell a (Cell (Atom 5) b)) = if a == b then Atom 0 else Atom 1
+eval (a :-: Atom 5 :-: b) = if a == b then Atom 0 else Atom 1
+eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
+     a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
+       :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
+       :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
+eval x = x
+
+-- eval (Cell a (Cell (Atom 7) (Cell b c))) = Cell a (Cell (Atom 2) (Cell b (Cell (Atom 1) c)))
 
 treeLookup :: Integer -> Noun -> Noun
 treeLookup 1 n = n
-treeLookup 2 (Cell a b) = a
-treeLookup 3 (Cell a b) = b
+treeLookup 2 (a :-: b) = a
+treeLookup 3 (a :-: b) = b
 treeLookup a b = if even a then treeLookup 2 (treeLookup (div a 2) b)
                            else treeLookup 3 (treeLookup (div (a - 1) 2) b)
 
