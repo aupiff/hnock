@@ -3,10 +3,12 @@
 
 module HNock where
 
-import qualified Data.Map as Map
-import           Data.Maybe (fromMaybe)
+import           Control.Monad
+import           Data.Either.Combinators (mapLeft)
 import           Data.Function (on)
 import           Data.List (sortBy)
+import qualified Data.Map as Map
+import           Data.Maybe (fromMaybe)
 import           Text.ParserCombinators.Parsec ( Parser
                                                , char
                                                , choice
@@ -32,8 +34,8 @@ infixr 7 :-:
 
 {-- PARSING --}
 
-parseEvalNoun = fmap eval . parseNoun
-parseNoun = parse noun ""
+parseEvalNoun = eval <=< parseNoun
+parseNoun = mapLeft show . parse noun ""
 
 program :: Parser Noun
 program = noun <* eof
@@ -89,34 +91,35 @@ atom = Atom . (read :: String -> Integer) <$>
 --
 -- *a               *a
 
--- TODO should be :: Noun -> Either Noun Noun
-eval :: Noun -> Noun
-eval (a :-: (b :-: c) :-: d) = eval (a :-: b :-: c) :-: eval (a :-: d)
-eval x@(a :-: Atom 0 :-: Atom b) = case treeLookup b a of
-                                        Right a -> a
-                                        Left _ -> x
-eval (a :-: Atom 1 :-: b) = b
-eval (a :-: Atom 2 :-: b :-: c) = eval $ eval (a :-: b) :-: eval (a :-: c)
-eval (a :-: Atom 3 :-: b) = case eval (a :-: b) of
-                                    Atom _ -> Atom 1
-                                    (:-:) _ _ -> Atom 0
-eval x@(a :-: Atom 4 :-: b) = case eval (a :-: b) of
-                                     Atom v -> Atom (v + 1)
-                                     _      -> x
-eval (a :-: Atom 5 :-: b) = if a == b then Atom 0 else Atom 1
-eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
-     a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
-       :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
-       :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
-eval (a :-: Atom 7 :-: b :-: c) = eval $ a :-: Atom 2 :-: b :-: Atom 1 :-: c
-eval (a :-: Atom 8 :-: b :-: c) = eval $
-    a :-: Atom 7 :-: ((Atom 7 :-: (Atom 0 :-: Atom 1) :-: b) :-: Atom 0 :-: Atom 1) :-: c
-eval (a :-: Atom 9 :-: b :-: c) = eval $
-    a :-: Atom 7 :-: c :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 0 :-: b
-eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
-    a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
-eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
-eval x = x
+eval :: Noun -> Either String Noun
+eval (a :-: (b :-: c) :-: d) = do r1 <- eval (a :-: b :-: c)
+                                  r2 <- eval (a :-: d)
+                                  return $ r1 :-: r2
+eval x@(a :-: Atom 0 :-: Atom b) = treeLookup b a
+eval (a :-: Atom 1 :-: b) = Right b
+eval (a :-: Atom 2 :-: b :-: c) = do r1 <- eval (a :-: b)
+                                     r2 <- eval (a :-: c)
+                                     eval (r1 :-: r2)
+eval (a :-: Atom 3 :-: b) = eval (a :-: b) >>= (\x -> case x of
+                                                   Atom _ -> Right $ Atom 1
+                                                   (:-:) _ _ -> Right $ Atom 0)
+eval y@(a :-: Atom 4 :-: b) = eval (a :-: b) >>= (\x -> case x of
+                        Atom v -> Right $ Atom (v + 1)
+                        _      -> Left ("incrementing non-atom: " ++ show y))
+eval (a :-: Atom 5 :-: b) = Right $ if a == b then Atom 0 else Atom 1
+-- eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
+--      a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
+--        :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
+--        :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
+-- eval (a :-: Atom 7 :-: b :-: c) = eval $ a :-: Atom 2 :-: b :-: Atom 1 :-: c
+-- eval (a :-: Atom 8 :-: b :-: c) = eval $
+--     a :-: Atom 7 :-: ((Atom 7 :-: (Atom 0 :-: Atom 1) :-: b) :-: Atom 0 :-: Atom 1) :-: c
+-- eval (a :-: Atom 9 :-: b :-: c) = eval $
+--     a :-: Atom 7 :-: c :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 0 :-: b
+-- eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
+--     a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
+-- eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
+eval x = Left (show x)
 
 treeLookup :: Integer -> Noun -> Either String Noun
 treeLookup 1 n = Right n
