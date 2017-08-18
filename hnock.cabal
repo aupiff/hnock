@@ -1,13 +1,13 @@
 name:                hnock
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis:            Nock interpreter
+description:         A library for interpreting Nock programs
 homepage:            https://github.com/githubuser/hnock#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
+author:              Roy Blankman
+maintainer:          riblankman@gmail.com
+copyright:           2017 Roy Blankman
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -19,14 +19,6 @@ library
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , parsec
-  default-language:    Haskell2010
-
-executable hnock-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , hnock
   default-language:    Haskell2010
 
 test-suite hnock-test
@@ -42,4 +34,4 @@ test-suite hnock-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/hnock
+  location: https://github.com/aupiff/hnock
