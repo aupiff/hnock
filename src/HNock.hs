@@ -22,7 +22,11 @@ import           Text.ParserCombinators.Parsec ( Parser
                                                , (<|>)
                                                )
 
-data Noun = !Noun :-: !Noun | Atom !Integer deriving (Show, Eq)
+data Noun = !Noun :-: !Noun | Atom !Integer deriving Eq
+
+instance Show Noun where
+    show (Atom x) = show x
+    show (a :-: b) = "[" ++ show a ++ " " ++ show b ++ "]"
 
 infixr 7 :-:
 
@@ -85,9 +89,12 @@ atom = Atom . (read :: String -> Integer) <$>
 --
 -- *a               *a
 
+-- TODO should be :: Noun -> Either Noun Noun
 eval :: Noun -> Noun
 eval (a :-: (b :-: c) :-: d) = eval (a :-: b :-: c) :-: eval (a :-: d)
-eval (a :-: Atom 0 :-: Atom b) = treeLookup b a
+eval x@(a :-: Atom 0 :-: Atom b) = case treeLookup b a of
+                                        Right a -> a
+                                        Left _ -> x
 eval (a :-: Atom 1 :-: b) = b
 eval (a :-: Atom 2 :-: b :-: c) = eval $ eval (a :-: b) :-: eval (a :-: c)
 eval (a :-: Atom 3 :-: b) = case eval (a :-: b) of
@@ -109,12 +116,14 @@ eval (a :-: Atom 9 :-: b :-: c) = eval $
 eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
     a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
 eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
--- TODO figure out an error-handling strategy
 eval x = x
 
-treeLookup :: Integer -> Noun -> Noun
-treeLookup 1 n = n
-treeLookup 2 (a :-: b) = a
-treeLookup 3 (a :-: b) = b
-treeLookup a b = if even a then treeLookup 2 (treeLookup (div a 2) b)
-                           else treeLookup 3 (treeLookup (div (a - 1) 2) b)
+treeLookup :: Integer -> Noun -> Either String Noun
+treeLookup 1 n = Right n
+treeLookup 2 (a :-: b) = Right a
+treeLookup 3 (a :-: b) = Right b
+treeLookup a b@(_ :-: _)
+    | a <= 0 = Left "failed treeLookup"
+    | even a = treeLookup 2 =<< treeLookup (div a 2) b
+    | otherwise = treeLookup 3 =<< treeLookup (div (a - 1) 2) b
+treeLookup _ _ = Left "failed treeLookup"
