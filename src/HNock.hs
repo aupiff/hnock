@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib where
+module HNock where
 
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
@@ -21,15 +21,12 @@ import           Text.ParserCombinators.Parsec ( Parser
                                                , try
                                                , (<|>)
                                                )
-import Debug.Trace (traceShowId)
-
 
 data Noun = !Noun :-: !Noun | Atom !Integer deriving (Show, Eq)
 
 infixr 7 :-:
 
--- PARSING
---
+{-- PARSING --}
 
 parseEvalNoun = fmap eval . parseNoun
 parseNoun = parse noun ""
@@ -52,7 +49,7 @@ atom = Atom . (read :: String -> Integer) <$>
     ((char '[' *> stripSpaces (many1 digit) <* char ']') <|> many1 digit)
 
 
--- EVALUATION
+{-- EVALUATION --}
 
 -- ?[a b]           0
 -- ?a               1
@@ -96,9 +93,9 @@ eval (a :-: Atom 2 :-: b :-: c) = eval $ eval (a :-: b) :-: eval (a :-: c)
 eval (a :-: Atom 3 :-: b) = case eval (a :-: b) of
                                     Atom _ -> Atom 1
                                     (:-:) _ _ -> Atom 0
-eval (a :-: Atom 4 :-: b) = case eval (a :-: b) of
-                                    Atom v -> Atom (v + 1)
-                                    _      -> undefined
+eval x@(a :-: Atom 4 :-: b) = case eval (a :-: b) of
+                                     Atom v -> Atom (v + 1)
+                                     _      -> x
 eval (a :-: Atom 5 :-: b) = if a == b then Atom 0 else Atom 1
 eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
      a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
