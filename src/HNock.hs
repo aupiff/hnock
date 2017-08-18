@@ -107,18 +107,18 @@ eval y@(a :-: Atom 4 :-: b) = eval (a :-: b) >>= (\x -> case x of
                         Atom v -> Right $ Atom (v + 1)
                         _      -> Left ("incrementing non-atom: " ++ show y))
 eval (a :-: Atom 5 :-: b) = Right $ if a == b then Atom 0 else Atom 1
--- eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
---      a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
---        :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
---        :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
--- eval (a :-: Atom 7 :-: b :-: c) = eval $ a :-: Atom 2 :-: b :-: Atom 1 :-: c
--- eval (a :-: Atom 8 :-: b :-: c) = eval $
---     a :-: Atom 7 :-: ((Atom 7 :-: (Atom 0 :-: Atom 1) :-: b) :-: Atom 0 :-: Atom 1) :-: c
--- eval (a :-: Atom 9 :-: b :-: c) = eval $
---     a :-: Atom 7 :-: c :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 0 :-: b
--- eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
---     a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
--- eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
+eval (a :-: Atom 6 :-: b :-: c :-: d) = eval $
+     a :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 2 :-: (Atom 1 :-: c :-: d)
+       :-: (Atom 1 :-: Atom 0) :-: Atom 2 :-: (Atom 1 :-: Atom 2 :-: Atom 3)
+       :-: (Atom 1 :-: Atom 0) :-: Atom 4 :-: Atom 4 :-: b
+eval (a :-: Atom 7 :-: b :-: c) = eval $ a :-: Atom 2 :-: b :-: Atom 1 :-: c
+eval (a :-: Atom 8 :-: b :-: c) = eval $
+     a :-: Atom 7 :-: ((Atom 7 :-: (Atom 0 :-: Atom 1) :-: b) :-: Atom 0 :-: Atom 1) :-: c
+eval (a :-: Atom 9 :-: b :-: c) = eval $
+     a :-: Atom 7 :-: c :-: Atom 2 :-: (Atom 0 :-: Atom 1) :-: Atom 0 :-: b
+eval (a :-: Atom 10 :-: (b :-: c) :-: d) = eval $
+     a :-: Atom 8 :-: c :-: Atom 7 :-: (Atom 0 :-: Atom 3) :-: d
+eval (a :-: Atom 10 :-: b :-: c) = eval $ a :-: c
 eval x = Left (show x)
 
 treeLookup :: Integer -> Noun -> Either String Noun
